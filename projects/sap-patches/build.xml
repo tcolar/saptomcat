@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SAP Development Environment Patches" default="dist">
+
+	<property file="local-build.properties" />
+	<property file="build.properties" />
+
+	<property environment="env" />
+
+	<property name="lib.dir" location="lib" />
+	<property name="build.dir" location="build" />
+	<property name="src.dir" location="src" />
+	<property name="classes.dir" location="${build.dir}/classes" />
+	<property name="jar.name" value="local-sap-patches" />
+
+	<property name="javac.debug" value="true" />
+	<property name="javac.debuglevel" value="lines,vars,source" />
+	<property name="javac.source" value="1.4" />
+	<property name="javac.target" value="1.4" />
+
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<delete dir="${classes.dir}" />
+	</target>
+
+	<target name="realclean" depends="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="init">
+		<tstamp>
+			<format property="build.date" pattern="dd-MMM-yyyy HH:mm:ss" />
+			<format property="build.timestamp" pattern="yyyyMMdd.HHmmss" />
+		</tstamp>
+		<echo message="Build started: ${build.date}" />
+	</target>
+
+	<target name="build" depends="init">
+		<mkdir dir="${classes.dir}" />
+		<javac debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" destdir="${classes.dir}">
+			<src path="${src.dir}" />
+			<classpath refid="build.classpath" />
+		</javac>
+	</target>
+
+	<target name="jar" depends="build">
+		<property name="jar.file" value="${build.dir}/${jar.name}.jar" />
+		<delete file="${jar.file}" />
+		<jar destfile="${jar.file}">
+			<fileset dir="${classes.dir}" />
+			<manifest>
+				<attribute name="Build-User" value="${user.name}" />
+				<attribute name="Build-Date" value="${build.date}" />
+				<attribute name="Build-Hostname" value="${env.COMPUTERNAME}" />
+				<attribute name="Implementation-Title" value="SAP Development Environment Patches" />
+				<attribute name="Implementation-Version" value="${build.timestamp}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="dist" depends="clean, jar" />
+
+</project>
+

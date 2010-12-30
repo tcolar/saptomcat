@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/1.4.2_19"/>
+	<classpathentry kind="lib" path="lib/references/library/com.sap.security.api.sda/com.sap.security.api.jar"/>
+	<classpathentry kind="lib" path="lib/references/library/com.sap.km.trex.client/trex.jc_api.jar"/>
+	<classpathentry kind="lib" path="lib/extra/server/bin/system/logging.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

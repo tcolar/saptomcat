@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.ant.freeform</type>
+    <configuration>
+        <general-data xmlns="http://www.netbeans.org/ns/freeform-project/1">
+            <!-- Do not use Project Properties customizer when editing this file manually. -->
+            <name>SAP Development Environment Patches</name>
+            <properties/>
+            <folders>
+                <source-folder>
+                    <label>src</label>
+                    <type>java</type>
+                    <location>src</location>
+                </source-folder>
+            </folders>
+            <ide-actions>
+                <action name="build">
+                    <target>build</target>
+                </action>
+                <action name="clean">
+                    <target>clean</target>
+                </action>
+                <action name="rebuild">
+                    <target>clean</target>
+                    <target>build</target>
+                </action>
+            </ide-actions>
+            <view>
+                <items>
+                    <source-folder style="packages">
+                        <label>src</label>
+                        <location>src</location>
+                    </source-folder>
+                    <source-file>
+                        <location>build.xml</location>
+                    </source-file>
+                </items>
+                <context-menu>
+                    <ide-action name="build"/>
+                    <ide-action name="rebuild"/>
+                    <ide-action name="clean"/>
+                </context-menu>
+            </view>
+            <subprojects/>
+        </general-data>
+        <java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/1">
+            <compilation-unit>
+                <package-root>src</package-root>
+                <classpath mode="compile">lib/com.sap.security.core.ume.service.jar:lib/commons-beanutils.jar:lib/commons-collections.jar:lib/commons-digester.jar:lib/commons-fileupload.jar:lib/commons-lang.jar:lib/commons-logging.jar:lib/commons-validator.jar:lib/log4j-1.2.16.jar:lib/logging.jar:lib/sap.com~crm~ipc~ipcbo~assembly.jar:lib/sap.com~crm~ipc~ipccore~assembly.jar:lib/sap.com~crm~ipc~ipcpricing~assembly.jar:lib/sap.com~crm~ipc~ipc~assembly.jar:lib/sap.com~crm~ipc~srv~msa~commands~assembly.jar:lib/sap.com~crm~ipc~srv~msa~server~assembly.jar:lib/sap.com~crm~ipc~tteanalysis~assembly.jar:lib/sap.com~crm~ipc~web~tteanalysis.war:lib/sap.com~crm~isa~auctionb2x~assembly.jar:lib/sap.com~crm~isa~auctionbase~assembly.jar:lib/sap.com~crm~isa~basketdb~assembly.jar:lib/sap.com~crm~isa~isacat~assembly.jar:lib/sap.com~crm~isa~isacorer3~assembly.jar:lib/sap.com~crm~isa~isacore~assembly.jar:lib/sap.com~crm~isa~lwc~assembly.jar:lib/sap.com~crm~isa~shopadmin~assembly.jar:lib/sap.com~crm~isa~smartstream~assembly.jar:lib/sap.com~crm~isa~userr3~assembly.jar:lib/sap.com~crm~tc~appbase~assembly.jar:lib/sap.com~crm~tc~campaign~assembly.jar:lib/sap.com~crm~tc~catalog~assembly.jar:lib/sap.com~crm~tc~contract~assembly.jar:lib/sap.com~crm~tc~core~assembly.jar:lib/sap.com~crm~tc~ecommercebase~assembly.jar:lib/sap.com~crm~tc~pcatapi~assembly.jar:lib/sap.com~crm~tc~scheduler~assembly.jar:lib/sap.com~crm~tc~user~assembly.jar:lib/sap.com~crm~tc~xcmadmin~assembly.jar:lib/servlet.jar:lib/struts-legacy.jar:lib/struts.jar:lib/jARM_API.jar:lib/jARMSat_API.jar:lib/tc_sec_destinations_interface.jar:lib/tc_sec_securestorage_service.jar:lib/tc_sec_compat.jar:lib/tc_sec_csi.jar:lib/tc_sec_destinations_interface.jar:lib/tc_sec_destinations_service.jar:lib/tc_sec_https.jar:lib/tc_sec_jaas.jar:lib/tc_sec_saml_util.jar:lib/tc_sec_securestorage_service.jar:lib/tc_sec_ssf.jar:lib/tc_sec_userstore_lib.jar:lib/com.sap.security.api.jar:lib/exception.jar:lib/frame.jar:lib/opensqlsta.jar</classpath>
+                <source-level>1.4</source-level>
+            </compilation-unit>
+        </java-data>
+    </configuration>
+</project>
