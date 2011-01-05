@@ -14,6 +14,7 @@ using xml
 ** Note: gdbtable is an undocumented SAP format, so this conversion is a hack and only the minimum required
 ** was implemented and this might break/need to be uopdated with further SAPCRMDIC releases
 ** Made to work on MySQL, might need modifs for other db's
+** Works with H2 as well
 **
 ** Example: fan netColarSapWebshop::SapCrmDicToSql /tmp/SAPCRMDIC12_0-10002941.SCA > dic.sql
 **
@@ -22,6 +23,9 @@ class SapCrmDicToSql
   Void processDic(Str dic)
   {
     file := File(Uri(dic))
+
+    // special metada table where other tables are "registered"
+    echo("CREATE TABLE BC_DDDBTABLERT(NAME VARCHAR(255) PRIMARY KEY, TIMESTMP NUMBER, TYPE VARCHAR(255), ACCESS VARCHAR(255), XMLVALUE LONGTEXT);")
 
     func := |File f, Str path -> Void|
     {
@@ -38,10 +42,19 @@ class SapCrmDicToSql
 
   Void processGdbTable(File f)
   {
-    root := XParser(f.in).parseDoc(true).root
+    Str xml := f.readAllStr
+
+    root := XParser(xml.in).parseDoc(true).root
     if(root.name == "Dbtable")
     {
       tableName := root.get("name");
+
+      // register the table
+      ts := DateTime.now.toJava
+      
+      // TODO should escape ticks in xml ?
+      echo("INSERT INTO BC_DDDBTABLERT VALUES(`$tableName`,`$ts`,`T`,`*`,`$xml`);")
+
       [Int:GdbTableMeta] columns := [:] {ordered = true}
 
       Str? pkey := root.elem("primary-key", false)?.elem("columns", false)?.elem("column", false)?.text?.toStr
