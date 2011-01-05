@@ -13,8 +13,8 @@ using xml
 **
 ** Note: gdbtable is an undocumented SAP format, so this conversion is a hack and only the minimum required
 ** was implemented and this might break/need to be uopdated with further SAPCRMDIC releases
-** Made to work on MySQL, might need modifs for other db's
-** Works with H2 as well
+** Made to work on H2L, might need modifs for other db's
+** should work on MySQl as well
 **
 ** Example: fan netColarSapWebshop::SapCrmDicToSql /tmp/SAPCRMDIC12_0-10002941.SCA > dic.sql
 **
