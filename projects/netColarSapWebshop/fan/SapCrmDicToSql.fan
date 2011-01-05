@@ -20,6 +20,8 @@ using xml
 **
 class SapCrmDicToSql
 {
+  const Str sep := "'";
+
   Void processDic(Str dic)
   {
     file := File(Uri(dic))
@@ -51,9 +53,11 @@ class SapCrmDicToSql
 
       // register the table
       ts := DateTime.now.toJava
+
+      cleanXml := xml.replace("\'","''");
       
       // TODO should escape ticks in xml ?
-      echo("INSERT INTO BC_DDDBTABLERT VALUES(`$tableName`,`$ts`,`T`,`*`,`$xml`);")
+      echo("INSERT INTO BC_DDDBTABLERT VALUES(${sep}$tableName${sep},${sep}$ts${sep},${sep}T${sep},${sep}*${sep},${sep}$cleanXml${sep});")
 
       [Int:GdbTableMeta] columns := [:] {ordered = true}
 
@@ -102,7 +106,7 @@ class SapCrmDicToSql
       {
         if( ! cols.isEmpty)
           cols += ", "
-        cols += "`$it.name` $it.type"
+        cols += "\"$it.name\" $it.type"
         if(it.notNull)
             cols += " NOT NULL"
         if(it.isPkey)
