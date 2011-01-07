@@ -1,0 +1,158 @@
+#Listen 443
+
+##### 443 HTTPS #######
+NameVirtualHost 127.0.0.1:443
+
+#B2B Sap
+<VirtualHost 127.0.0.1:443>
+ServerName local-b2b-sap:443
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+
+SSLEngine on
+SSLProxyEngine on
+SSLCertificateFile /etc/apache2/ssl/local-b2b-sap.pem
+SSLCertificateKeyFile /etc/apache2/ssl/local-b2b-sap.pem
+
+ProxyPassReverse / https://localsap:50101/
+RewriteRule ^/staticcontent/(.*) https://bgprxdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^[/]?$ https://localsap:50101/b2b_global/b2b/init.do [P]
+RewriteRule ^/b2b_global/admin$ /b2b_global/b2b/init.do [R]
+RewriteRule ^/b2b_global/(.*) https://localsap:50101/b2b_global/$1 [P]
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^/cimg/(.*) https://crmimagesdev.pcf.com/$1 [P]
+</VirtualHost>
+
+#B2C Sealy Sap
+<VirtualHost 127.0.0.1:443>
+ServerName local-sealy-sap:443
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+
+SSLEngine on
+SSLProxyEngine on
+SSLCertificateFile /etc/apache2/ssl/local-sealy-sap.pem
+SSLCertificateKeyFile /etc/apache2/ssl/local-sealy-sap.pem
+
+ProxyPassReverse / https://localsap:50101/
+RewriteRule ^[/]?$ https://localsap:50101/b2c_sealy/link.do?link=ZHOMESTD [P]
+RewriteRule ^/b2c_sealy/(.*) https://localsap:50101/b2c_sealy/$1 [P]
+RewriteRule ^/staticcontent/(.*) https://cprxdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^/cimg/(.*) https://crmimg.pcf.com/$1 [P]
+RewriteRule ^/(.*) https://localsap:50101/b2c_sealy/link.do?link=$1&%{QUERY_STRING} [P]
+</VirtualHost>
+
+#B2C PCoast Sap
+<VirtualHost local-pcoast-sap:443>
+ServerName local-pcoast-sap:443
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+
+SSLEngine on
+SSLProxyEngine on
+SSLCertificateFile /etc/apache2/ssl/local-pcoast-sap.pem
+SSLCertificateKeyFile /etc/apache2/ssl/local-pcoast-sap.pem
+
+ProxyPassReverse / https://localsap:50101/
+RewriteRule ^[/]?$ https://localsap:50101/b2c_pcoast/link.do?link=ZHOMESTD [P]
+RewriteRule ^/staticcontent/(.*) https://pcoastdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^/b2c_pcoast/(.*) https://localsap:50101/b2c_pcoast/$1 [P]
+RewriteRule ^/cimg/(.*) https://crmimagesdev.pcf.com/$1 [P]
+RewriteRule ^(.*) https://localsap:50101/b2c_pcoast/link.do?link=$1&%{QUERY_STRING} [P]
+</VirtualHost>
+
+###### 80 HTTP ###########
+NameVirtualHost 127.0.0.1:80
+
+# b2b tomcat
+<VirtualHost local-b2b:80>
+ServerName local-b2b:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^[/]?$ http://localhost:8080/b2b_global/b2b/init.do [P]
+RewriteRule ^/staticcontent/(.*) http://bgprxdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^/cimg/(.*) http://crmimagesdev.pcf.com/$1 [P]
+RewriteRule ^(.*) http://localhost:8080/$1 [P]
+</VirtualHost>
+
+# sealy tomcat
+<VirtualHost local-sealy:80>
+ServerName local-sealy:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^[/]?$ http://localhost:8080/b2c/link.do?link=ZHOMESTD [P]
+RewriteRule ^/b2c_sealy/(.*) http://localhost:8080/b2c/$1 [P]
+RewriteRule ^/b2c/(.*) http://localhost:8080/b2c/$1 [P]
+RewriteRule ^/staticcontent/(.*) http://cprxdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^/cimg/(.*) http://crmimg.pcf.com/$1 [P]
+RewriteRule ^/(.*) http://localhost:8080/b2c/link.do?link=$1&%{QUERY_STRING} [P]
+</VirtualHost>
+
+# pcoast tomcat
+<VirtualHost local-pcoast:80>
+ServerName local-pcoast:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^[/]?$ http://localhost:8080/b2c/link.do?link=ZHOMESTD [P]
+RewriteRule ^/staticcontent/(.*) http://pcoastdev.pcf.com/staticcontent/$1 [L]
+RewriteRule ^/b2c_pcoast/(.*) http://localhost:8080/b2c/$1 [P]
+RewriteRule ^/b2c/(.*) http://localhost:8080/b2c/$1 [P]
+RewriteRule ^/cimg/(.*) http://crmimagesdev.pcf.com/$1 [P]
+RewriteRule ^(.*) http://localhost:8080/b2c/link.do?link=$1&%{QUERY_STRING} [P]
+</VirtualHost>
+
+### Redirect SAP engine sites to use https only (to avoid http to https cart swicth issues ###
+<VirtualHost local-sealy-sap:80>
+ServerName local-sealy-sap:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^/(.*) https://local-sealy-sap/$1 [R,L]
+</VirtualHost>
+
+<VirtualHost local-pcoast-sap:80>
+ServerName local-pcoast-sap:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^/(.*) https://local-pcoast-sap/$1 [R,L]
+</VirtualHost>
+
+<VirtualHost local-b2b-sap:80>
+ServerName local-b2b-sap:80
+DocumentRoot /var/www/
+RewriteEngine On
+RewriteLog "/var/log/apache2/sap.rewrite.log"
+RewriteLogLevel 5
+TimeOut 120
+ProxyPassReverse / http://localhost:8080/
+RewriteRule ^/(.*) https://local-b2b-sap/$1 [R,L]
+</VirtualHost>
+
