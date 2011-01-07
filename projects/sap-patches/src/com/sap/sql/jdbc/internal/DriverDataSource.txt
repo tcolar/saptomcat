@@ -1,0 +1,16 @@
+Thibautc: Modified getConnection() method to prevent casting exceptions
+
+Decompile from opensqlsta.jar:
+
+===
+    public Connection getConnection() throws SQLException
+    {
+        Connection con = getConnection(this.user, this.password);
+        // Thibautc: Added this to make it work with Tomcat (Tomcat wraps the connection in another object)
+        if (!(con instanceof CommonConnection))
+        {
+            return CommonConnectionFactory.createCommonConnection(con, null);
+        }
+        return con;
+    }
+===

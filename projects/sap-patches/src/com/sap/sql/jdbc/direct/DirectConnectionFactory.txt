@@ -1,0 +1,9 @@
+Thibautc: Minor change from standard to register my H2/MySQL Porting implementation
+
+Decompile from opensqlsta.jar:
+
+In the static block that registers the porting implementations, add:
+===
+        registerPortingFactory("MYSQL", "com.pcf.sql.mysql.MysqlPortingFactory");
+        registerPortingFactory("H2", "com.pcf.sql.h2.H2PortingFactory");
+===

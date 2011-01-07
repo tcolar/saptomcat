@@ -1,0 +1,26 @@
+= com.sap.isa.core.logging.sla.IsaLocationSla =
+
+Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+
+This is a logging class, we want to make it log to log4j so that everything ends up in a single easily managed location.
+
+Lots of changes here, so these notes are started and are by no means complete:
+ * Drop the existing fields:
+   {{{
+     private Location location
+     private static Map mSessions
+     private statid Map mLocations
+   }}}
+ * Add a new field to hold a log4j logger
+   {{{
+     private org.apache.log4j.Logger location
+   }}}
+ * Modify the constructor to initialise the logger
+   {{{
+     location = Logger.getLogger(name);
+   }}}
+ * Fix all the errors that now exist, it should be a fairly straightforward translation to the log4j logger
+ * It's probably worth fixing the implementation of the following method so that you get full information even if there are no available message resources
+   {{{
+     private String getResourceBundleString(Object key, Object args[])
+   }}}

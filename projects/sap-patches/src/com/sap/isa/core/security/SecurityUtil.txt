@@ -1,0 +1,52 @@
+= com.sap.isa.core.security.SecurityUtil =
+
+Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+
+The following works around our local shop not being able to decrypt stored passwords.
+
+Add the following constants:
+{{{
+    private static final String DEV_PASSWORD_PLAINTEXT = "DevEnv:PlainText:";
+    private static final String DEV_PASSWORD_PROPERTY = "DevEnv:Property:";
+    private static final String DEV_PASSWORD_FAIL = "DevEnv:Fail:";
+}}}
+
+Edit the following method:
+{{{
+  public static Serializable decryptFromBase64(String encryptedStr) 
+}}}
+
+After the argument checks, replace the remaining method body with the following:
+{{{
+            if (encryptedStr.startsWith(DEV_PASSWORD_PLAINTEXT)) {
+                log.warn("Using plaintext password value");
+                String result = encryptedStr.substring(DEV_PASSWORD_PLAINTEXT.length());
+	            if (result.length() == 0) {
+                    throw new ISASecurityException(encryptedStr + " is invalid");
+                }
+                return result;
+            }
+            else if (encryptedStr.startsWith(DEV_PASSWORD_PROPERTY)) {
+                log.warn("Using password from system property");
+                String name = encryptedStr.substring(DEV_PASSWORD_PROPERTY.length());
+                if (name.length() == 0) {
+                    throw new ISASecurityException("No password property name set");
+                }
+                String result = System.getProperty(name);
+                if (result.length() == 0) {
+                    throw new ISASecurityException("No value set for password system property '" + name + "'");
+                }
+                return result;
+            }
+            else if (encryptedStr.startsWith(DEV_PASSWORD_FAIL)) {
+                log.warn("Deliberately failing");
+                String result = encryptedStr.substring(DEV_PASSWORD_FAIL.length());
+                if (result.length() == 0) {
+                    result = "Deliberate failure retrieving password";
+                }
+                throw new ISASecurityException(result);
+            }
+            else {          
+                throw new ISASecurityException("Cannot decrypt password");
+            }
+}}}

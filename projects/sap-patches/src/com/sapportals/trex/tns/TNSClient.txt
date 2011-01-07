@@ -1,0 +1,20 @@
+= com.sapportals.trex.tns.TNSClient =
+
+Obtain the source from `lib\references\library\com.sap.km.trex.client\trex.jc_api.jar` either:
+ * The source might be included in the JAR (it was not in our version) or
+ * Decompile the class 
+
+Edit the following method 
+{{{
+  private synchronized Transferable sendRequest(Transferable request) throws TrexException
+}}}
+
+Ensure that the String used to store the master name server (in our version it is named `masterNS`, decompilation results may vary) is never `null`. 
+The value is populated with the result from the `TrexConfigManager.getMasterNameServer()` call.
+
+Something along the lines of the following is all that needs to be added:
+{{{
+  if (masterNS == null) {
+    masterNS = "";
+  }
+}}}

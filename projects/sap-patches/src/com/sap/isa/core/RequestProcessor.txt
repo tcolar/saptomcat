@@ -1,0 +1,12 @@
+= com.sap.isa.core.RequestProcessor =
+
+Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+
+Edit the method:
+{{{
+  public void process(HttpServletRequest  request, HttpServletResponse response)
+}}}
+
+In the `catch (Throwable)` block comment out the entire `if`-`else` block, '''except''' the `log.error` call
+
+This just means that errors will always get logged to the log file, rather than to standard error.

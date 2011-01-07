@@ -1,0 +1,17 @@
+Thibautc: Modified to add support for H2 and MySql
+
+Decompile from opensqlsta.jar:
+
+Add field:
+===
+    public static final int VENDOR_H2 = 9;
+===
+
+Update the arrays productNames, vendornames and vendorTitle  (add H2 and fix typo for MYSQL - all uppercase)
+===
+  private static final String[] productNames = { "DB2/", "DB2 UDB FOR AS/400", "DB2", "INFORMIX", "MICROSOFT SQL SERVER", "ORACLE", "SAP DB", "MYSQL", "DBSL", "H2" };
+
+  private static final String[] vendorNames = { "DB2_UDB", "DB2_UDB_AS400", "DB2_UDB_OS390", "INFORMIX", "MS_SQL_SERVER", "ORACLE", "SAPDB", "MYSQL", "DBSL", "H2" };
+
+  private static final String[] vendorTitles = { "DB2 UDB", "DB2 UDB for iSeries", "DB2 UDB for z/OS", "Informix", "Microsoft SQL Server", "Oracle", "MySQL MaxDB", "MySQL", "JTS DBSL", "H2"};
+===

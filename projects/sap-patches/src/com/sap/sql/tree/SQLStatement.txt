@@ -1,0 +1,17 @@
+Thibautc: added support for H2 (case 9)
+
+Decompile from opensqlsta.jar:
+
+In the toSqlString() method, add support for MySql / H2
+
+Before "default:" case, add:
+
+===
+            // Thibautc: added support for MySql / H2 (case 7/9)
+            case 7:
+                expert = new MySqlTextExpert();
+                break;
+            case 9:
+                expert = new H2TextExpert();
+                break;
+===
