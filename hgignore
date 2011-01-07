@@ -1,0 +1,8 @@
+^private/
+^projects/sap-patches/src/nz/.*/*.java
+^projects/sap-patches/src/com/sap/.*/*.java
+^projects/sap-patches/src/com/sapportals/.*/*.java
+^projects/sap-patches/lib/
+^projects/sap-patches/build/
+^projects/J2eeSapUtils/build/
+^projects/J2eeSapUtils/dist/
