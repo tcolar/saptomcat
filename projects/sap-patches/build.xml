@@ -48,7 +48,7 @@
 	</target>
 
 	<target name="jar" depends="build">
-		<property name="jar.file" value="${build.dir}/${jar.name}.jar" />
+		<property name="jar.file" value="dist/${jar.name}.jar" />
 		<delete file="${jar.file}" />
 		<jar destfile="${jar.file}">
 			<fileset dir="${classes.dir}" />
