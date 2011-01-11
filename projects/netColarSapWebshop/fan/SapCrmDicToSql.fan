@@ -35,7 +35,7 @@ class SapCrmDicToSql
     }
 
     // Find all gdbtbale files and process them
-    ZipFinder
+    ArchiveLookup
     {
       it.listExtensions = ["gdbtable"]
       it.findFunc = func

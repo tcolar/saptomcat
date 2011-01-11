@@ -1,26 +1,22 @@
 // History:
 //   Oct 7, 2010 tcolar Creation
 //
+using xml
 
 **
 ** "Inject" webshop project with patched SAP code
 **
 class Installer
 {
-  //TODO: make webshop-b2b a variable
-  // TODO: make b2c an option
-  const Uri sdaZipEntry := `/DEPLOYARCHIVES/crm~b2b.sda`;
-
-  const File resFolder := File(`sap_resources/`)
-  const File patchesFolder := File(`sap-patches/`)
-  const File jcoFolder  := resFolder + `jco/`
-  const File jettyFolder := File(`webshop-b2b/jetty-6.1.25/`)
-  const File jcoJar  := jcoFolder + `sapjco.jar`
+  const File scaFolder
+  const File sapTomcatPrjFolder
+  const File jcoFolder
+  const File tomcatFolder
+  const File projectFolder
+  const Bool isB2C
+  const File jcoJar 
   const File linuxLibFolder := File(`/usr/lib/`)
   const File winLibFolder := File(`/c:/windows/system32/`)
-  const File wsLibs := File(`webshop-b2b/lib/local/sapjco/`)
-  const File srcFolder := File(`webshop-b2b/etc/src/sap.com/b2b/`)
-  const File loggingLibs := File(`jco-logging/lib/`)
   const File tmpFolder := File(`tmp/`)
   File? scaFile
 
@@ -36,129 +32,256 @@ class Installer
   {
     tmpFolder.delete
     tmpFolder.create
-    resFolder.listFiles.each |File f| {if(f.name.upper.startsWith("SAPSHRAPP")) scaFile=f }
+    tmpFolder.deleteOnExit
+
+    /*scaFolder = File(ask("What folder contains the SAP SCA files ? (enter path)").toUri)
+    jcoFolder = File(ask("What folder contains jco ? (enter path)").toUri)
+    sapTomcatPrjFolder = File(ask("Where is the sap_tomcat project (from bitbucket)? (enter path)").toUri)
+    tomcatFolder = File(ask("What folder contains vanilla tomcat ? (to be patched)").toUri)
+    projectFolder = File(ask("What folder contains the b2c/b2b web IDE project ? (to be patched)").toUri)
+    isB2C = ! ask("Do you want to extract B2C or B2B ? (b2c/b2b)").equalsIgnoreCase("b2b")*/
+
+    // testing
+    scaFolder = File(`./scas/`); jcoFolder = File(`./jco/`); projectFolder = File(`./b2c_mine/`);
+    tomcatFolder = File(`./tomcat/`); isB2C = true; sapTomcatPrjFolder = File(`./saptomcat/`);
+
+    jcoJar = jcoFolder + `sapjco.jar`
+
+    scaFolder.listFiles.each |File f| {if(f.name.upper.startsWith("SAPSHRAPP")) scaFile = f }
+
     err := checks()
     if(err != null)
-      {
+    {
       echo("Error: $err\n")
-      echo(infos)
       Env.cur.exit(-1)
     }
-    //doJco
-    doSca
-    Dependencies(`webshop-b2b/`, resFolder.uri).run
-    copyPatchLibs
+
+    askAndRun("Run step 'patch Tomcat' ?") |->| {patchTomcat}
+
+    askAndRun("Run step 'copy JCO' ?") |->| {copyJco}
+
+    askAndRun("Extract the web project sources from the SCA ?") |->| {extractSca}
+
+    askAndRun("Find and install libraries dependencies ?") |->|
+    {
+        jars := Dependencies(projectFolder.uri, scaFolder.uri).run
+        echo("Copying $jars.size jars into sap_libs")
+        jars.each
+        {
+            it.copyInto(tomcatFolder + `sap_libs/`,["overwrite":true])
+        }
+    }
+    //copyPatchLibs
     echo("Done.")
   }
 
-  ** Copy select libraries to sap-patches folder
+  /*** Copy select libraries to sap-patches folder
   ** Libs needed to build the patched files
   Void copyPatchLibs()
   {
-    echo("Copying select libs to sap-patches folder")
-    File(`webshop-b2b/lib/extra/server/bin/system/logging.jar`).copyTo(File(`sap-patches/lib/extra/server/bin/system/logging.jar`),["overwrite":true])
-    File(`webshop-b2b/lib/references/library/com.sap.km.trex.client/trex.jc_api.jar`).copyTo(File(`sap-patches/lib/references/library/com.sap.km.trex.client/trex.jc_api.jar`),["overwrite":true])
-    File(`webshop-b2b/lib/references/library/com.sap.security.api.sda/com.sap.security.api.jar`).copyTo(File(`sap-patches/lib/references/library/com.sap.security.api.sda/com.sap.security.api.jar`),["overwrite":true])
+  echo("Copying select libs to sap-patches folder")
+  File(`webshop-b2b/lib/extra/server/bin/system/logging.jar`).copyTo(File(`sap-patches/lib/extra/server/bin/system/logging.jar`),["overwrite":true])
+  File(`webshop-b2b/lib/references/library/com.sap.km.trex.client/trex.jc_api.jar`).copyTo(File(`sap-patches/lib/references/library/com.sap.km.trex.client/trex.jc_api.jar`),["overwrite":true])
+  File(`webshop-b2b/lib/references/library/com.sap.security.api.sda/com.sap.security.api.jar`).copyTo(File(`sap-patches/lib/references/library/com.sap.security.api.sda/com.sap.security.api.jar`),["overwrite":true])
+  }*/
+
+  **
+  ** Patch vanilla tomcat distribution (config files)
+  ** - create folders
+  ** - add sap_libs/*.jar to the common loader in catalina.porperties
+  ** - copy and register our custom clasloader in context.xml
+  ** - create trex config in trexjavaclient.properties
+  ** - create a user in tomcat-users.xml
+  ** - update logging.properties log config
+  Void patchTomcat()
+  {
+    f := tomcatFolder+`patched.txt`
+    if(f.exists)
+    {
+      echo("*** Warning: It seems the tomcat patches where alreday applied to $tomcatFolder.pathStr , skipping!\nIf you want to run it again, please remove $f.pathStr")
+      return
+    }
+    f.create
+
+    jar := sapTomcatPrjFolder+`projects/J2eeSapUtils/dist/J2eeSapUtils.jar`
+    dest := tomcatFolder + `lib/J2eeSapUtils.jar`;
+    jar.copyInto(tomcatFolder, ["overwrite":true])
+
+    sapLibs := tomcatFolder + `sap_libs/`;
+    sapLocalLibs := tomcatFolder + `sap_local_libs/`;
+    sapDb := sapTomcatPrjFolder + `db/`;
+    
+    sapLibs.create
+    sapLocalLibs.create
+    sapDb.create
+
+    catalinaProps := tomcatFolder + `conf/catalina.properties`
+    buf := Buf()
+    buf.printLine("Holla!!!!")
+    catalinaProps.eachLine |Str line|
+    {
+      if(line.trim.startsWith("common.loader") &&
+            ! line .trim.endsWith("sap_libs/*.jar"))
+      {
+        line = line + ",\${catalina.home}/sap_libs/*.jar";
+      }
+      buf.printLine(line)
+    }
+    catalinaProps.out.writeBuf(buf.flip).close
+
+    contextXml := tomcatFolder + `conf/context.xml`
+    Str xml := contextXml.readAllStr
+    root := XParser(xml.in).parseDoc(true).root
+    XElem loader := XElem("Loader")
+    loader.addAttr("className", "org.apache.catalina.loader.WebappLoader")
+    loader.addAttr("loaderClass", "net.colar.j2eeSapUtils.TomcatClassLoader")
+    root.add(loader)
+    contextOut := contextXml.out
+    root.doc.write(contextOut)
+    contextOut.close
+
+    trexHost := ask("Enter TREX server host name:")
+    trexPort := ask("Enter TREX server port number (ex: 30301):")
+
+    trexProps := sapLibs + `trexjavaclient.properties`
+    trexOut := trexProps.out()
+    trexOut.printLine("nameserver.backupserverlist = tcpip://${trexHost}:${trexPort}")
+    trexOut.printLine("nameserver.address = tcpip://${trexHost}:${trexPort}")
+    trexOut.close
+
+    tomcatUser := ask("Create a tomcat user. User Name? (ex: admin)")
+    tomcatPass := ask("Tomcat user Password? (ex: admin)")
+    usersXml := tomcatFolder + `conf/tomcat-users.xml`
+    Str uXml := usersXml.readAllStr
+    usersRoot := XParser(uXml.in).parseDoc(true).root
+    XElem user := XElem("user")
+    user.addAttr("password", "$tomcatPass")
+    user.addAttr("username", "$tomcatUser")
+    user.addAttr("roles", "manager,admin")
+    usersRoot.add(user)
+    out := usersXml.out
+    usersRoot.doc.write(out)
+    out.close
+
+    logProps := tomcatFolder + `conf/logging.properties`
+    logOut := logProps.out(true)
+    logOut.printLine("").printLine("")
+    logOut.printLine("log4j.logger.com.sap.isa.core.util.MiscUtil=INFO")
+    logOut.printLine("log4j.logger.com.sap.isa.core.xcm=INFO")
+    logOut.printLine("log4j.logger.com.sap.isa.catalog.actions=INFO")
+    logOut.printLine("log4j.logger.com.sap.isa.isacore.action=INFO")
+    logOut.printLine("log4j.logger.com.sap.isa.user.action=INFO")
+    logOut.printLine("log4j.logger.org.apache.commons=INFO")
+    logOut.printLine("log4j.logger.org.apache.jasper=INFO")
+    logOut.printLine("log4j.logger.org.apache.struts=INFO")
+    logOut.close
+
+    // TODO: sap_libs sap_local_libs
+
   }
 
   ** Copy jco libs
-  Void doJco()
+  Void copyJco()
   {
     Str os := Env.cur.os
     if(os.equalsIgnoreCase("win32"))
-      {
+    {
       File jcoLib := jcoFolder + `sapjcorfc.dll`
       File rfcLib := jcoFolder + `librfc32.dll`
-      //ask("\tCopy $jcoLib to $winLibFolder Y/N ?") |->| {jcoLib.copyInto(winLibFolder, ["overwrite":true])}
-      //ask("\tCopy $rfcLib to $winLibFolder Y/N ?") |->| {rfcLib.copyInto(winLibFolder, ["overwrite":true])}
+      echo("*** Please copy as root/admin $jcoLib to $winLibFolder")
+      echo("*** Please copy as root/admin $rfcLib to $winLibFolder")
+      ask("Press enter once done")
     }
     else if(os.equalsIgnoreCase("linux"))
-      {
+    {
       File jcoLib := jcoFolder + `libsapjcorfc.so`
       File rfcLib := jcoFolder + `librfccm.so`
-      //ask("\tCopy $jcoLib to $linuxLibFolder Y/N ?") |->| {jcoLib.copyInto(linuxLibFolder, ["overwrite":true])}
-      //ask("\tCopy $rfcLib to $linuxLibFolder Y/N ?") |->| {rfcLib.copyInto(linuxLibFolder, ["overwrite":true])}
+      echo("*** Please copy as root/admin $jcoLib to $linuxLibFolder")
+      echo("*** Please copy as root/admin $rfcLib to $linuxLibFolder")
+      ask("Press enter once done")
     }
     else
-    echo("Unexpected OS: $os - Not copying Jco native libs")
+      echo("*** Unexpected OS: $os - Not copying Jco native libs, copy them manually to the system library folder")
 
-    //ask("\tCopy $jcoJar to $wsLibs Y/N ?") |->| {jcoJar.copyInto(wsLibs, ["overwrite":true])}
-    //ask("\tCopy $jcoJar to $loggingLibs Y/N ?") |->| {jcoJar.copyInto(loggingLibs, ["overwrite":true])}
+    jcoJar.copyInto(tomcatFolder + `sap_libs/`,["overwrite":true])
   }
 
   ** Extract the SCA (SAPSHRAPP.SCA)
-  ** Get the B2B sda out of it and extract b2b libs & classes out of it
+  ** Get the B2B or B2C sda out of it and extract sources, libs & classes out of it
   ** Copy them into project folder.
-  Void doSca()
+  Void extractSca()
   {
+    webFolder := projectFolder + `web/`;
+
     echo("Extracting SDA from SCA")
     // extract /DEPLOYARCHIVES/crm~b2b.sca
     File scaCopy := tmpFolder + scaFile.name.toUri
     scaZip := Zip.open(scaFile)
+
+    sdaZipEntry := isB2C ? `/DEPLOYARCHIVES/crm~b2c.sda` : `/DEPLOYARCHIVES/crm~b2b.sda`
+
     sdaFile := scaZip.contents[sdaZipEntry]
     // zip.contents wants physical file, so extract it first
-    sdaFile.copyTo(scaCopy)
+    sdaFile.copyTo(scaCopy, ["overwrite":true])
     scaZip.close
 
     // extract content of crm~b2b.sca
-    sdaZip := Zip.open(scaCopy)
-    sdaZip.contents.each |file, uri|
-    {
-      File dest := srcFolder + file.pathStr[1..-1].toUri
-      //echo("\tExtracting SCA contents: $uri -> $dest")
-      file.copyTo(dest,["overwrite":true])
-    }
-    sdaZip.close
+    echo("Extracting sca to  to $tmpFolder.pathStr")
+    extractTo(scaCopy, tmpFolder)
 
-    echo("Extracting B2B war")
-    warFile := srcFolder + `sap.com~crm~isa~web~b2b.war`
-    warZip := Zip.open(warFile)
-    warZip.contents.each |file, uri|
-    {
-      File dest := File(`webshop-b2b/war/`) + file.pathStr[1..-1].toUri
-      //echo("\tExtracting war contents: $uri -> $dest")
-      file.copyTo(dest,["overwrite":true])
-    }
-    warZip.close
+    echo("Extracting war to $webFolder.pathStr")
+    warFile := tmpFolder + (isB2C ? `sap.com~crm~isa~web~b2c.war` : `sap.com~crm~isa~web~b2b.war`)
+    extractTo(warFile, webFolder)
 
-    echo("Copying config files to deploy folder")
-    File deployFolder := File(`webshop-b2b/deploy/war/`)
-    File(`webshop-b2b/war/WEB-INF/xcm/customer/configuration/config-data.xml`).copyTo(deployFolder+`WEB-INF/xcm/customer/configuration/config-data.xml`,["overwrite":true])
-    File(`webshop-b2b/war/WEB-INF/xcm/customer/configuration/scenario-config.xml`).copyTo(deployFolder+`WEB-INF/xcm/customer/configuration/scenario-config.xml`,["overwrite":true])
-    File(`webshop-b2b/war/WEB-INF/xcm/sap/system/bootstrap-config.xml`).copyTo(deployFolder+`WEB-INF/xcm/sap/system/bootstrap-config.xml`,["overwrite":true])
+    echo("Copying META-INF to $projectFolder.pathStr")
+    metaFolder := tmpFolder + `META-INF/`;
+    metaFolder.copyInto(projectFolder, ["overwrite":true])
 
-    echo("Copying properties files")
-    File(`webshop-b2b/WEB-INF/classes`).list.each{ it.copyInto(File(`webshop-b2b/src-properties`),["overwrite":true])}
-    File(`webshop-b2b/WEB-INF/classes`).delete
-
-    echo("Copying META-INF to deploy folder")
-    File(`webshop-b2b/etc/src/sap.com/b2b/META-INF/`).copyInto(deployFolder,["overwrite":true])
-
-    echo("Copying web.xml to jetty")
-    File webXml := jettyFolder + `config/sap-b2b-web.xml`
-    File(`webshop-b2b/war/WEB-INF/web.xml`).copyTo(webXml,["overwrite":true])
+    File srcFolder := projectFolder + `src-ref/`;
+    srcFolder.create
+    echo("Extracting reference Java sources to $srcFolder.pathStr")
+    srcFile := tmpFolder + `src.zip`;
+    extractTo(srcFile, srcFolder)
   }
 
   ** Ask a question to the user (yes/no), execute 'func' if answer is yes.
-  Void ask(Str question, Func func)
+  Void askAndRun(Str question, Func func)
+  {
+    input := ask(question)
+    if(input.lower.startsWith("y"))
+      func.call
+    else
+      echo("---Skipping step---")
+  }
+
+  ** Ask a question to the user, call func with answer
+  Str ask(Str question)
   {
     echo(question)
-    input := Env.cur.in.readChar
-    if(input == 'y' || input == 'Y')
-    func.call
+    input := Env.cur.in.readLine
+    return input
   }
 
   ** check needed SAP resources are available
   Str? checks()
   {
     if( ! jcoFolder.exists )
-    return "Could not find JCO at: $jcoFolder.pathStr"
+      return "Could not find JCO at: $jcoFolder.pathStr"
     if( ! jcoJar.exists )
-    return "Could not find JCO jar at: $jcoJar.pathStr"
+      return "Could not find JCO jar at: $jcoJar.pathStr"
     if( scaFile == null)
-    return "Could not find SAPSHRAPP SCA in $resFolder"
+      return "Could not find SAPSHRAPP SCA in $scaFolder"
     return null
   }
 
-  const Str infos := """Infos: TBD"""
+  Void extractTo(File archive, File destFolder)
+  {
+    zip := Zip.open(archive)
+    zip.contents.each |file, uri|
+    {
+      File dest := destFolder + file.pathStr[1..-1].toUri
+      file.copyTo(dest,["overwrite":true])
+    }
+    zip.close
+  }
 }

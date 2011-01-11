@@ -1,25 +1,9 @@
 
 **
-** Help finding SAP jars
-** 
-class SapJarFinder
-{
-  Str[] jars := [,]
-
-  new make(File scaFolder)
-  {
-    Func func := |File file, Str path| {jars.add(path)}
-    finder := ZipFinder {findFunc = func}
-    echo("Looking up jars ... please wait !")
-    finder.scan(scaFolder)
-  }
-}
-
-**
 ** Generic helper to try to find a specific class/resource given a folder of jars/sca's etc...
 ** Pretty useful to find a solution(jar) for a ClassNotFoundException
 **
-class ClassFinder
+class ArchiveFinder
 {
   ** Find a file within jars/sca's (and print out it's path if found)
   ** For example : something.class
@@ -36,7 +20,7 @@ class ClassFinder
       }
       zip.close
     }
-    finder := ZipFinder {findFunc = func}
+    finder := ArchiveLookup {findFunc = func; listExtensions = null}
     finder.scan(archiveFolder)
   }
 
@@ -66,17 +50,18 @@ class ZipDumper
       Env.cur.exit(-1)
     }
     File dir := File(args[0].toUri)
-    ZipFinder{listExtensions = null}.scan(dir)
+    ArchiveLookup{listExtensions = null}.scan(dir)
   }
 }
 
 ** Generic zip lookup class
 ** Recursively dig through zipped archives (zip within zips)
 ** And return files of interest
-class ZipFinder
+** By default search jar files
+class ArchiveLookup
 {
   // which files are 'zips'
-  static const Str[] unzipExtensions := ["sca","sda","ppa","zip"/*,"war"*/]
+  Str[] unzipExtensions := ["sca","sda","ppa","zip","war"]
   // which files to list (files we are looking for) - Null means all
   Str[]? listExtensions:= ["jar"]
   // Replace to do something more useful with results
