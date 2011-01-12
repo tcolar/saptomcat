@@ -8,17 +8,19 @@ using xml
 **
 class Installer
 {
-  const File scaFolder
-  const File sapTomcatPrjFolder
-  const File jcoFolder
-  const File tomcatFolder
-  const File projectFolder
+  const File scaFolder // the sap sca files
+  const File sapTomcatPrjFolder // the sap-tomcat project from bitbucket
+  const File jcoFolder // the folder that contain a JCO distro for this platform
+  const File tomcatFolder // The folder that contains a vanilla sap-tomcat distro
+  const File projectFolder // Your B2B/B2C project folder
+  
   const Bool isB2C
   const File jcoJar 
   const File linuxLibFolder := File(`/usr/lib/`)
   const File winLibFolder := File(`/c:/windows/system32/`)
-  const File tmpFolder := File(`tmp/`)
-  File? scaFile
+  const File tmpFolder := File(`tmp/`) // where we extract temporary data
+  const File? scaFile
+  const File sapPatches
 
   **
   ** Main method
@@ -30,6 +32,16 @@ class Installer
 
   new make()
   {
+    echo("  ==============================================================
+            Helper tool to make a SAP B2B/B2C project run under Tomcat.
+            Thibaut Colar (@tcolar)
+
+            Please see the documentation here:
+            http://wiki.colar.net/sap_isa_on_tomcat
+
+            Use at your own risk, no warranties whatsoever.
+            ==============================================================")
+
     tmpFolder.delete
     tmpFolder.create
     tmpFolder.deleteOnExit
@@ -44,6 +56,7 @@ class Installer
     // testing
     scaFolder = File(`./scas/`); jcoFolder = File(`./jco/`); projectFolder = File(`./b2c_mine/`);
     tomcatFolder = File(`./tomcat/`); isB2C = true; sapTomcatPrjFolder = File(`./saptomcat/`);
+    sapPatches = sapTomcatPrjFolder + `projects/sap-patches/`
 
     jcoJar = jcoFolder + `sapjco.jar`
 
@@ -56,23 +69,44 @@ class Installer
       Env.cur.exit(-1)
     }
 
-    askAndRun("Run step 'patch Tomcat' ?") |->| {patchTomcat}
+    askAndRun("1) Run step 'patch Tomcat' ?") |->| { patchTomcat }
 
-    askAndRun("Run step 'copy JCO' ?") |->| {copyJco}
+    askAndRun("2) Run step 'copy JCO' ?") |->| { copyJco }
 
-    askAndRun("Extract the web project sources from the SCA ?") |->| {extractSca}
+    askAndRun("3) Extract the web project sources from the SCA ?") |->| { extractSca }
 
-    askAndRun("Find and install libraries dependencies ?") |->|
+ 
+    askAndRun("4) Find and install libraries dependencies ?") |->|
     {
-        jars := Dependencies(projectFolder.uri, scaFolder.uri).run
-        echo("Copying $jars.size jars into sap_libs")
-        jars.each
-        {
-            it.copyInto(tomcatFolder + `sap_libs/`,["overwrite":true])
-        }
+      jars := lookupDependencies
+      echo("Copying $jars.size jars into sap_libs and sap-patches")
+      jars.each
+      {
+        it.copyInto(tomcatFolder + `sap_libs/`,["overwrite":true])
+        it.copyInto(sapPatches + `libs/`,["overwrite":true])
+      }
     }
-    //copyPatchLibs
+
+    askAndRun("5) Update sap-patches project ?") |->|
+    {
+      jars := lookupDependencies
+      sql := ask("5.b) Do you need SQL support (For Java baskets) y/n ?").lower.startsWith("y")
+      PatchBuilder(this, sql).run
+      
+      localLibs := tomcatFolder + `sap_local_libs/`
+      echo("********
+            Please review all the java files in the $sapPatches project and patch them as decribed in the corresponding .txt files.
+            When done build the sap-patches project(ex: ant) and copy the resulting jar(dist/local-sap-patches.jar) into $localLibs
+            ********")
+
+    }
+
     echo("Done.")
+  }
+
+  once File[] lookupDependencies()
+  {
+    return Dependencies(projectFolder.uri, scaFolder.uri, tmpFolder.uri).run
   }
 
   /*** Copy select libraries to sap-patches folder
@@ -93,6 +127,7 @@ class Installer
   ** - create trex config in trexjavaclient.properties
   ** - create a user in tomcat-users.xml
   ** - update logging.properties log config
+  ** 
   Void patchTomcat()
   {
     f := tomcatFolder+`patched.txt`
@@ -247,7 +282,7 @@ class Installer
   ** Ask a question to the user (yes/no), execute 'func' if answer is yes.
   Void askAndRun(Str question, Func func)
   {
-    input := ask(question)
+    input := ask("$question (y/n)")
     if(input.lower.startsWith("y"))
       func.call
     else
@@ -257,7 +292,7 @@ class Installer
   ** Ask a question to the user, call func with answer
   Str ask(Str question)
   {
-    echo(question)
+    echo("** Question: $question")
     input := Env.cur.in.readLine
     return input
   }

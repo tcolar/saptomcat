@@ -14,13 +14,19 @@ class Dependencies
 {
   const Uri root
   const Uri scas
+  const Uri tmp
   ** pattern for Sap manifest library name
   static const Regex sdaName := Regex.fromStr("keyname:(.*)")
+  ** We will add the jars from this SDA as well (implied ?)
+  static const Str[] impliedDeps := ["bootstrap.sda"]
+  ** Other jars that wher needed ... not sure how the dependency is listed so just hard coded for now
+  static const Str[] extraJars := ["jddi.jar", "antlr.jar"] // needed for sql
 
-  new make(Uri webProjectRoot, Uri scaFolder)
+  new make(Uri webProjectRoot, Uri scaFolder, Uri tmpFolder)
   {
     root = webProjectRoot
     scas = scaFolder
+    tmp = tmpFolder
   }
 
   **
@@ -33,10 +39,39 @@ class Dependencies
 
     scasFolder := File(scas);
 
-    extractor := SapScaExtractor(scasFolder)
+    File tmpFolder := File(tmp)
+    extractor := SapScaExtractor(scasFolder, tmpFolder)
 
     Str:File[] sapLibs := indexSapLibs(scasFolder)
 
+    // Add implied dependencies
+    impliedDeps.each
+    {
+          name := normalizeSdaName(it)
+          if(sapLibs.containsKey(name))
+          {
+              sapLibs[name].each |file|
+              {
+                  jars.add(file)
+              }
+          }
+    }
+    
+    // add extra jars
+    extraJars.each
+    {
+        name := it
+        tmpFolder.walk |File file|
+        {
+              if(file.name.equalsIgnoreCase(name))
+              {
+                  jars.add(file)
+                  return // end the walk
+              }
+        }
+    }
+
+    // Add B2C/ B2B dependencies
     File appJ2ee := File(root) + `META-INF/application-j2ee-engine.xml`
     Str xml := appJ2ee.readAllStr
 
@@ -124,13 +159,8 @@ class SapScaExtractor
 {
   static const Str[] unzipExtensions := ["sda","ppa","zip","war","ear","rar"]
 
-  new make(File scasFolder)
+  new make(File scasFolder, File tmpFolder)
   {
-    File tmpFolder := scasFolder+`tmp/`;
-    tmpFolder.delete
-    tmpFolder.create
-    tmpFolder.deleteOnExit
-
     echo("Extracting SCA archives ... please wait.")
     scasFolder.walk |file|
     {
