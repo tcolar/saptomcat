@@ -1,6 +1,6 @@
 = com.sap.isa.core.security.SecurityUtil =
 
-Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+==Patch Provided by SISU===
 
 The following works around our local shop not being able to decrypt stored passwords.
 

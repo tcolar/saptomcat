@@ -1,7 +1,5 @@
 = com.sap.security.api.ticket.TicketVerifier =
 
-Obtain the source from `lib\references\library\com.sap.security.api.sda\com.sap.security.api.jar` either:
- * The source will be included in the JAR (in was in our version) or
- * Decompile the class 
+==Patch Provided by SISU===
 
 Remove all references to `iaik.x509.X509Certificate` all the methods that use it are deprecated and do not appear to be used, so remove the methods.

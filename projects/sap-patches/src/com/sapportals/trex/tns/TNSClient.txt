@@ -1,8 +1,6 @@
 = com.sapportals.trex.tns.TNSClient =
 
-Obtain the source from `lib\references\library\com.sap.km.trex.client\trex.jc_api.jar` either:
- * The source might be included in the JAR (it was not in our version) or
- * Decompile the class 
+==Patch Provided by SISU===
 
 Edit the following method 
 {{{

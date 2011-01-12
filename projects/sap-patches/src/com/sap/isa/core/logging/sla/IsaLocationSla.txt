@@ -1,6 +1,6 @@
 = com.sap.isa.core.logging.sla.IsaLocationSla =
 
-Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+==Patch Provided by SISU===
 
 This is a logging class, we want to make it log to log4j so that everything ends up in a single easily managed location.
 

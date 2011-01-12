@@ -1,6 +1,6 @@
 = com.sap.isa.core.RequestProcessor =
 
-Obtain the source from `webshop-b2b\etc\src\sap.com\b2b\src.zip`
+==Patch Provided by SISU===
 
 Edit the method:
 {{{
