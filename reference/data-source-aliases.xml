@@ -1,0 +1,15 @@
+<!-- 
+Thibautc: Local env datasource for SAP bjava basket (H2 database)
+-->
+
+<?xml version="1.0"?>
+<data-source-aliases>
+	<aliases>
+		<data-source-name>
+       ${com.sap.datasource.default}
+    </data-source-name>
+		<alias>
+       SAP/CRM/b2c
+    </alias>
+	</aliases>
+</data-source-aliases>

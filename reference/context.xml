@@ -1,0 +1,24 @@
+<!-- 
+Thibautc: Local env datasource for SAP bjava basket (H2 database)
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/b2c_dev">
+    <!--SAP H2 datasource -->
+    <Resource name="SAP/CRM/b2c"
+             auth="Container"
+             type="javax.sql.DataSource"
+             factory = "com.sap.sql.jdbc.internal.DriverDataSource"
+             maxActive="100"
+             maxIdle="30"
+             maxWait="10000"
+             description="SAP B2C JDBC"
+             loginTimeout="60"
+             driverClassName="org.h2.Driver"
+             classname="org.h2.Driver"
+             url="jdbc:h2:file:${catalina.home}/db/sapb2c;TRACE_LEVEL_FILE=2"
+             username="sa"
+             user="sa"
+             password=""
+             />
+</Context>
