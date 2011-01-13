@@ -1,0 +1,28 @@
+<!-- 
+Thibautc: Example custom basic scenario-config.xml To use with Tomcat
+
+Best is to retrieve this config from an existing SAP B2C/B2B deployment (XCM admin tool)
+This is just a basic example.
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<scenarios version="4.0" xmlns:isa="com.sap.isa.core.config" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xml="http://www.w3.org/XML/1998/namespace" isa:elementid="overwritten">
+  <scenario name="b2c_mine" shorttext="CRM standard configuration for B2C, using javabasket,javatemplate, and CRM order" ccmsscenname="b2ccrmst" isa:extends="../scenario[@name='b2ccrmstandard']" activescenario="true" defaultscenario="true">
+    <configparams>
+	<!-- Thibautc: You will need at least custom jco for jco definition in config-data.xml--> 
+	<configparam name="jcodata" value="b2c_mine" savevalue=""/>  
+      	
+	<!-- Thibautc: Uncomment to use java basket instead of crm basket (faster)--> 
+	<!--<configparam name="basketdata" value="b2c_mine" savevalue="javabasket"/>-->
+
+	<!-- Other possible customizations-->
+      <configparam name="usertype" value="CRM_Standalone_LogonConsumer_NonUniqueEmail" savevalue="CRM_Standalone_LogonConsumer"/>
+	<!--
+      <configparam name="webcatdata" value="b2c_mine" savevalue="webcatdefault"/>
+      <configparam name="basketdata" value="b2c_mine" savevalue="javabasket"/>
+	-->
+    </configparams>
+  </scenario>
+  <xi:include href="${sap}/configuration/scenario-config.xml#xpointer(scenarios /*)"/>
+</scenarios>
+

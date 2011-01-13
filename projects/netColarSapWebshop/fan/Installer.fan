@@ -210,9 +210,6 @@ class Installer
     logOut.printLine("log4j.logger.org.apache.jasper=INFO")
     logOut.printLine("log4j.logger.org.apache.struts=INFO")
     logOut.close
-
-    // TODO: sap_libs sap_local_libs
-
   }
 
   ** Copy jco libs

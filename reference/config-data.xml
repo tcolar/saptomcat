@@ -1,0 +1,84 @@
+<!-- 
+Thibautc: Example custom basic scenario-config.xml To use with Tomcat
+
+Best is to retrieve this config from an existing SAP B2C/B2B deployment (XCM admin tool)
+This is just a basic example.
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<data version="4.0" xmlns:isa="com.sap.isa.core.config" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xml="http://www.w3.org/XML/1998/namespace" isa:elementid="overwritten">
+  <component isa:extends="../component[@id='jco']">
+    <configs>
+      <config id="b2c_mine" isa:base="server_connect">
+        <params id="sap_logon_part1">
+	  <!-- Thibautc: You absolutely need to set teh JCO data (connection to CRM) correctly here -->
+          <param name="client" value="100" savevalue=""/>
+          <param name="lang" value="en" savevalue=""/>
+          <param name="sysnr" value="01" savevalue=""/>
+          <param name="ashost" value="mycrmserver.mycomapny.com" savevalue=""/>
+        </params>
+        <params id="sap_logon_part2">
+          <param name="user" value="weblogin" savevalue=""/>
+          <!-- Thibautc: Replace "my_password" by the actual JCO password -->
+          <param name="passwd" value="#securestorage#DevEnv:PlainText:my_password#encrypt" savevalue=""/>
+        </params>
+        <params id="sap_logon_part3">
+          <param name="jco.client.trace" value="0" savevalue="0"/>
+        </params>
+      </config>
+    </configs>
+  </component>
+  <component isa:extends="../component[@id='b2c']">
+    <configs>
+      <config id="b2cconfig" xcmcontrol="invisible" isa:base="b2cdefault">
+        <params>
+         <!-- Thibautc: You will want the port set right (8080 for tomcat) and the relogin url setup correctly -->
+          <!--<param name="SSLEnabled" value="false" savevalue="true"/>-->
+          <param name="http.port.core" value="8080" savevalue="$AUTO"/>
+          <param name="https.port.core" value="8080" savevalue="$AUTO"/>
+          <param name="reloginurl.core" value="http://127.0.0.1:8080/b2c_mine/" savevalue="${reloginurl.core.isa.sap.com}"/>
+        </params>
+      </config>
+    </configs>
+  </component>
+  <!-- Begin LWC -->
+  <component isa:extends="../component[@id='lwc']">
+    <configs>
+      <config id="lwcconfig" xcmcontrol="invisible" isa:base="lwcdefault">
+      </config>
+    </configs>
+  </component>
+  <!-- End LWC -->
+
+  <!-- Thibautc: Examples of other customizations ... not required -->
+
+  <!--
+  <component isa:extends="../component[@id='ui']">
+    <configs>
+      <config id="b2c_mine" isa:base="default">
+        <params id="ui-settings">
+          <param name="enable.priceAnalysis" value="true" savevalue="false"/>
+          <param name="configOnlineEvaluate" value="false" savevalue="true"/>
+          <param name="enablerelogincookie.core" value="true" savevalue="false"/>
+          <param name="enable.nonCatalogProducts" value="false" savevalue="true"/>
+          <param name="showstacktrace.isacore" value="true" savevalue="false"/>
+          <param name="showmodulename.core" value="true" savevalue="false"/>
+        </params>
+      </config>
+    </configs>
+  </component>
+  <component isa:extends="../component[@id='basket']">
+    <configs>
+      <config id="b2c_mine" isa:base="javabasket">
+        <params id="basketsettings">
+          <param name="forceIPCPricing" value="true" savevalue="false"/>
+          <param name="freeGoodsEnable" value="true" savevalue="false"/>
+          <param name="freeGoodsShowWarningMessage" value="true" savevalue="false"/>
+        </params>
+      </config>
+    </configs>
+  </component>
+  -->
+  <xi:include href="${sap}/configuration/config-data.xml#xpointer(data/*)"/>
+</data>
+
